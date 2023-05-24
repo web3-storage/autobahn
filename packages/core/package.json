@@ -1,0 +1,54 @@
+{
+  "name": "@web3-storage/autobahn-core",
+  "version": "2.1.0",
+  "description": "An IPFS gateway for accessing UnixFS data via CAR CIDs",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "npm run dev",
+    "dev": "npm run build:debug && miniflare dist/worker.mjs --watch --debug -m --r2-persist",
+    "build": "esbuild --bundle src/index.js --format=esm --sourcemap --minify --outfile=dist/worker.mjs",
+    "build:debug": "esbuild --bundle src/index.js --format=esm --outfile=dist/worker.mjs",
+    "test": "npm run build:debug && node --test --experimental-vm-modules",
+    "lint": "standard"
+  },
+  "keywords": [
+    "IPFS",
+    "gateway",
+    "CAR",
+    "CID",
+    "IPLD",
+    "UnixFS"
+  ],
+  "author": "Alan Shaw & Oli Evans",
+  "license": "Apache-2.0 OR MIT",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.338.0",
+    "@aws-sdk/client-s3": "^3.338.0",
+    "@aws-sdk/util-dynamodb": "^3.338.0",
+    "@ipld/car": "^5.1.0",
+    "@ipld/dag-cbor": "^9.0.0",
+    "@ipld/dag-json": "^10.0.1",
+    "@ipld/dag-pb": "^4.0.2",
+    "@web3-storage/gateway-lib": "^3.1.0",
+    "cardex": "^1.0.1",
+    "chardet": "^1.5.0",
+    "dagula": "^6.0.1",
+    "dotenv": "^16.0.3",
+    "magic-bytes.js": "^1.0.12",
+    "mrmime": "^1.0.1",
+    "multiformats": "^11.0.2",
+    "p-defer": "^4.0.0",
+    "streaming-iterables": "^7.1.0"
+  },
+  "devDependencies": {
+    "ava": "^5.2.0",
+    "carbites": "^1.0.6",
+    "esbuild": "^0.17.11",
+    "files-from-path": "^0.2.6",
+    "ipfs-car": "^0.9.2",
+    "miniflare": "^2.9.0",
+    "standard": "^17.0.0",
+    "uint8arrays": "^4.0.3"
+  }
+}
