@@ -9,5 +9,8 @@
   "devDependencies": {
     "@types/aws-lambda": "^8.10.115",
     "sst": "^2.8.28"
+  },
+  "dependencies": {
+    "lambda-stream": "^0.3.0"
   }
 }
