@@ -3,7 +3,7 @@ import { Dagula } from 'dagula'
 import { HttpError } from '@web3-storage/gateway-lib/util'
 import { S3Client } from '@aws-sdk/client-s3'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
-import { SimpleDynamoBlockstore } from './lib/blockstore.js'
+import { BatchingDynamoBlockstore } from './lib/blockstore.js'
 import pkg from '../package.json' assert { type: 'json' }
 
 /**
@@ -70,7 +70,7 @@ function getAwsCredentials (env) {
  */
 export function withDagula (handler) {
   return async (request, env, ctx) => {
-    const blockstore = new SimpleDynamoBlockstore(ctx.dynamoClient, ctx.dynamoTable, ctx.s3Clients)
+    const blockstore = new BatchingDynamoBlockstore(ctx.dynamoClient, ctx.dynamoTable, ctx.s3Clients)
     const dagula = new Dagula(blockstore)
     return handler(request, env, { ...ctx, dagula })
   }
