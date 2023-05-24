@@ -1,21 +1,26 @@
 import type { CID } from 'multiformats/cid'
 import type { Context } from '@web3-storage/gateway-lib'
 import type { DynamoDBClient } from '@aws-sdk/client-dynamodb'
-import type { S3 } from '@aws-sdk/client-s3'
+import type { S3Client } from '@aws-sdk/client-s3'
 
 export interface Environment {
   DEBUG: string
+  AWS_ACCESS_KEY_ID: string
+  AWS_SECRET_ACCESS_KEY: string
+  DYNAMO_REGION: string
+  DYNAMO_TABLE: string
+  S3_REGIONS: string
 }
 
 export interface DynamoContext extends Context {
   dynamoClient: DynamoDBClient
+  dynamoTable: string
 }
 
-export type Region = 'us-east-2'|'us-west-2'
-export type RegionalS3Clients = Record<Region, S3Client>
+export type RegionalS3Clients = Record<string, S3Client>
 
 export interface S3Context extends Context {
-  s3Clients: Map<Region, S3Client>
+  s3Clients: RegionalS3Clients
 }
 
 export interface R2GetOptions {

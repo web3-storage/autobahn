@@ -12,12 +12,13 @@ export async function handler (req, res) {
     headers.append(req.rawHeaders[i], req.rawHeaders[i + 1])
   }
   const { method } = req
-  const body = Readable.toWeb(req)
+  const body = ['GET', 'HEAD'].includes(method ?? '') ? undefined : Readable.toWeb(req)
   // @ts-expect-error
   const request = new Request(url, { method, headers, body })
 
   const env = { DEBUG: process.env.DEBUG ?? 'false', ...dotenv.config().parsed }
   const ctx = { waitUntil: () => {} }
+  // @ts-expect-error
   const response = await autobahn.fetch(request, env, ctx)
 
   res.statusCode = response.status
