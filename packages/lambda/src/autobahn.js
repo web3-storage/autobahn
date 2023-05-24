@@ -60,6 +60,8 @@ export async function getIpfs (evt, res) {
   // @ts-expect-error
   const response = await autobahn.fetch(request, env, ctx)
 
+  res.setIsBase64Encoded(false)
+
   const contentType = response.headers.get('content-type')
   if (contentType) {
     res.setContentType(contentType)
