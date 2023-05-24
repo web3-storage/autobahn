@@ -50,7 +50,12 @@ export async function getIpfs (evt, res) {
   const method = evt.requestContext.http.method
   const body = undefined
   const request = new Request(url, { method, headers, body })
-  const env = { DEBUG: process.env.DEBUG ?? 'false' }
+  const env = {
+    DEBUG: process.env.DEBUG ?? 'false',
+    DYNAMO_REGION: 'us-west-2',
+    DYNAMO_TABLE: 'prod-ep-v1-blocks-cars-position',
+    S3_REGIONS: 'us-east-2,us-west-2'
+  }
   const ctx = { waitUntil: () => {} }
   // @ts-expect-error
   const response = await autobahn.fetch(request, env, ctx)

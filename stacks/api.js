@@ -28,12 +28,13 @@ export function API ({ stack }) {
   // see: https://aws.amazon.com/blogs/compute/introducing-aws-lambda-response-streaming/
   const fn = new Function(stack, 'fn', {
     handler: 'packages/lambda/src/autobahn.handler',
-
     url: {
       cors: true,
       authorizer: 'none'
     }
   })
+
+  fn.attachPermissions(['s3:GetObject', 'dynamodb:Query'])
 
   stack.addOutputs({
     URL: fn.url
