@@ -60,10 +60,14 @@ export async function getIpfs (evt, res) {
   // @ts-expect-error
   const response = await autobahn.fetch(request, env, ctx)
 
-  const contentType = response.headers.get('content-type')
-  if (contentType) {
-    res.setContentType(contentType)
+  const metadata = {
+    statusCode: response.status,
+    // @ts-expect-error no entries() on headers!?
+    headers: Object.fromEntries(response.headers.entries())
   }
+
+  // @ts-expect-error awslambda is a global
+  res = awslambda.HttpResponseStream.from(res, metadata)
 
   // @ts-expect-error body may be undefined
   await pipeline(Readable.fromWeb(response.body), res)
