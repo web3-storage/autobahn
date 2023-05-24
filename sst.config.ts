@@ -1,5 +1,5 @@
 import { SSTConfig } from "sst"
-import { API } from "./stacks/AutobahnStack.js"
+import { API } from "./stacks/api.js"
 
 export default {
   config(_input) {

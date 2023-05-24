@@ -21,7 +21,11 @@
     "console": "sst console",
     "tsc": "tsc"
   },
+  "dependencies": {
+    "git-rev-sync": "^3.0.2"
+  },
   "devDependencies": {
+    "@types/git-rev-sync": "^2.0.0",
     "ava": "^5.2.0",
     "aws-cdk-lib": "2.72.1",
     "constructs": "10.1.156",
@@ -36,5 +40,15 @@
     "ignore": [
       "*.ts"
     ]
-  }
+  },
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/web3-storage/autobahn.git"
+  },
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/web3-storage/autobahn/issues"
+  },
+  "homepage": "https://github.com/web3-storage/autobahn"
 }
