@@ -1,6 +1,7 @@
 import { QueryCommand } from '@aws-sdk/client-dynamodb'
-import { marshall, unmarshall } from '@aws-sdk/util-dynamodb'
+import { unmarshall } from '@aws-sdk/util-dynamodb'
 import { base58btc } from 'multiformats/bases/base58'
+import retry from 'p-retry'
 
 /**
  * @typedef {{ bucket: string, region: string, key: string, offset: number, length: number }} IndexEntry
@@ -11,14 +12,19 @@ import { base58btc } from 'multiformats/bases/base58'
 export class DynamoIndex {
   #client
   #table
+  #max
 
   /**
    * @param {import('@aws-sdk/client-dynamodb').DynamoDBClient} client 
-   * @param {string} table 
+   * @param {string} table
+   * @param {object} [options]
+   * @param {number} [options.maxEntries] Max entries to return when multiple
+   * CAR files contain the same block.
    */
-  constructor (client, table) {
+  constructor (client, table, options) {
     this.#client = client
     this.#table = table
+    this.#max = options?.maxEntries ?? 5
   }
 
   /**
@@ -26,18 +32,20 @@ export class DynamoIndex {
    * @returns {Promise<IndexEntry[]>}
    */
   async get (cid) {
-    const command = new QueryCommand({
-      TableName: this.#table,
-      Limit: 3,
-      KeyConditions: {
-        blockmultihash: {
-          ComparisonOperator: 'EQ',
-          AttributeValueList: [{ S: base58btc.encode(cid.multihash.bytes) }],
-        }
-      },
-      AttributesToGet: ['carpath', 'length', 'offset']
-    })
-    const res = await this.#client.send(command)
+    const res = await retry(async () => {
+      const command = new QueryCommand({
+        TableName: this.#table,
+        Limit: this.#max,
+        KeyConditions: {
+          blockmultihash: {
+            ComparisonOperator: 'EQ',
+            AttributeValueList: [{ S: base58btc.encode(cid.multihash.bytes) }],
+          }
+        },
+        AttributesToGet: ['carpath', 'length', 'offset']
+      })
+      return await this.#client.send(command)
+    }, { minTimeout: 100, onFailedAttempt: err => console.warn(`failed DynamoDB request for: ${cid}`, err) })
     return (res.Items ?? []).map(item => {
       const { carpath, offset, length } = unmarshall(item)
       const [region, bucket, ...rest] = carpath.split('/')

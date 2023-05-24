@@ -1,25 +1,22 @@
 import { readBlockHead, asyncIterableReader } from '@ipld/car/decoder'
-// import { base58btc } from 'multiformats/bases/base58'
-// import defer from 'p-defer'
-import { DynamoIndex } from './block-index.js'
-// import { OrderedCarBlockBatcher } from './block-batch.js'
+import { base58btc } from 'multiformats/bases/base58'
 import { GetObjectCommand } from '@aws-sdk/client-s3'
+import defer from 'p-defer'
+import retry from 'p-retry'
+import { DynamoIndex } from './block-index.js'
+import { OrderedCarBlockBatcher } from './block-batch.js'
 
 /**
- * @typedef {import('multiformats').CID} CID
  * @typedef {import('cardex/mh-index-sorted').IndexEntry} IndexEntry
  * @typedef {string} MultihashString
  * @typedef {import('dagula').Block} Block
  * @typedef {import('../bindings.js').R2Bucket} R2Bucket
  */
 
-// 2MB (max safe libp2p block size) + typical block header length + some leeway
-// const MAX_ENCODED_BLOCK_LENGTH = (1024 * 1024 * 2) + 39 + 61
-
 /**
  * A blockstore that is backed by a DynamoDB index and S3 buckets.
  */
-export class SimpleDynamoBlockstore {
+export class DynamoBlockstore {
   /**
    * @param {import('@aws-sdk/client-dynamodb').DynamoDBClient} dynamoClient 
    * @param {string} dynamoTable
@@ -31,7 +28,7 @@ export class SimpleDynamoBlockstore {
     this._idx = new DynamoIndex(dynamoClient, dynamoTable)
   }
 
-  /** @param {CID} cid */
+  /** @param {import('multiformats').UnknownLink} cid */
   async get (cid) {
     // console.log(`get ${cid}`)
     const idxEntries = await this._idx.get(cid)
@@ -54,137 +51,149 @@ export class SimpleDynamoBlockstore {
   }
 }
 
-// export class DynamoBlockstore extends SimpleDynamoBlockstore {
-//   /** @type {Map<string, Array<import('p-defer').DeferredPromise<Block|undefined>>>} */
-//   #pendingBlocks = new Map()
+export class BatchingDynamoBlockstore extends DynamoBlockstore {
+  /** @type {Map<string, Array<import('p-defer').DeferredPromise<Block|undefined>>>} */
+  #pendingBlocks = new Map()
 
-//   /** @type {import('./block-batch.js').BlockBatcher} */
-//   #batcher = new OrderedCarBlockBatcher()
+  /** @type {import('./block-batch').BlockBatcher} */
+  #batcher = new OrderedCarBlockBatcher()
 
-//   #scheduled = false
+  #scheduled = false
 
-//   /** @type {Promise<void>|null} */
-//   #processing = null
+  /** @type {Promise<void>|null} */
+  #processing = null
 
-//   #scheduleBatchProcessing () {
-//     if (this.#scheduled) return
-//     this.#scheduled = true
+  #scheduleBatchProcessing () {
+    if (this.#scheduled) return
+    this.#scheduled = true
 
-//     const startProcessing = async () => {
-//       this.#scheduled = false
-//       const { promise, resolve } = defer()
-//       this.#processing = promise
-//       try {
-//         await this.#processBatch()
-//       } finally {
-//         this.#processing = null
-//         resolve()
-//       }
-//     }
+    const startProcessing = async () => {
+      this.#scheduled = false
+      const { promise, resolve } = defer()
+      this.#processing = promise
+      try {
+        await this.#processBatch()
+      } finally {
+        this.#processing = null
+        resolve()
+      }
+    }
 
-//     // If already running, then start when finished
-//     if (this.#processing) {
-//       return this.#processing.then(startProcessing)
-//     }
+    // If already running, then start when finished
+    if (this.#processing) {
+      return this.#processing.then(startProcessing)
+    }
 
-//     // If not running, then start on the next tick
-//     setTimeout(startProcessing)
-//   }
+    // If not running, then start on the next tick
+    setTimeout(startProcessing)
+  }
 
-//   async #processBatch () {
-//     console.log('processing batch')
-//     const batcher = this.#batcher
-//     this.#batcher = new OrderedCarBlockBatcher()
-//     const pendingBlocks = this.#pendingBlocks
-//     this.#pendingBlocks = new Map()
+  async #processBatch () {
+    console.log('processing batch')
+    const batcher = this.#batcher
+    this.#batcher = new OrderedCarBlockBatcher()
+    const pendingBlocks = this.#pendingBlocks
+    this.#pendingBlocks = new Map()
 
-//     while (true) {
-//       const batch = batcher.next()
-//       if (!batch.length) break
+    /**
+     * @param {import('multiformats').UnknownLink} cid 
+     * @param {Uint8Array} bytes 
+     */
+    const resolvePendingBlock = (cid, bytes) => {
+      const key = mhToKey(cid.multihash.bytes)
+      const blocks = pendingBlocks.get(key)
+      if (!blocks) return
+      console.log(`got wanted block ${cid} (${pendingBlocks.size} remaining)`)
+      const block = { cid, bytes }
+      blocks.forEach(b => b.resolve(block))
+      pendingBlocks.delete(key)
+    }
 
-//       batch.sort((a, b) => a.offset - b.offset)
+    while (true) {
+      const batch = batcher.next()
+      if (!batch.length) break
 
-//       const { carCid } = batch[0]
-//       const carPath = `${carCid}/${carCid}.car`
-//       const range = {
-//         offset: batch[0].offset,
-//         length: batch[batch.length - 1].offset - batch[0].offset + MAX_ENCODED_BLOCK_LENGTH
-//       }
+      batch.sort((a, b) => a.offset - b.offset)
 
-//       console.log(`fetching ${batch.length} blocks from ${carCid} (${range.length} bytes @ ${range.offset})`)
-//       const res = await this._dataBucket.get(carPath, { range })
-//       if (!res) {
-//         // should not happen, but if it does, we need to resolve `undefined`
-//         // for the blocks in this batch - they are not found.
-//         for (const blocks of pendingBlocks.values()) {
-//           blocks.forEach(b => b.resolve())
-//         }
-//         return
-//       }
+      const { region, bucket, key } = batch[0]
+      const range = `bytes=${batch[0].offset}-${batch[batch.length - 1].offset + batch[batch.length - 1].length - 1}`
 
-//       const reader = res.body.getReader()
-//       const bytesReader = asyncIterableReader((async function * () {
-//         while (true) {
-//           const { done, value } = await reader.read()
-//           if (done) return
-//           yield value
-//         }
-//       })())
+      console.log(`fetching ${batch.length} blocks from s3://${region}/${bucket}/${key} (${range})`)
+      const s3Client = this._buckets[region]
+      if (!s3Client) return
 
-//       while (true) {
-//         try {
-//           const blockHeader = await readBlockHead(bytesReader)
-//           const bytes = await bytesReader.exactly(blockHeader.blockLength)
-//           bytesReader.seek(blockHeader.blockLength)
+      const res = await retry(async () => {
+        const command = new GetObjectCommand({
+          Bucket: bucket,
+          Key: key,
+          Range: range
+        })
+        return await s3Client.send(command)
+      }, { minTimeout: 100, onFailedAttempt: err => console.warn(`failed S3 query for: s3://${region}/${bucket}/${key} (${range})`, err) })
 
-//           const key = mhToKey(blockHeader.cid.multihash.bytes)
-//           const blocks = pendingBlocks.get(key)
-//           if (blocks) {
-//             // console.log(`got wanted block for ${blockHeader.cid}`)
-//             const block = {
-//               cid: blockHeader.cid,
-//               bytes
-//             }
-//             blocks.forEach(b => b.resolve(block))
-//             pendingBlocks.delete(key)
-//           }
-//         } catch {
-//           break
-//         }
-//       }
-//       // we should have read all the bytes from the reader by now but if the
-//       // bytesReader throws for bad data _before_ the end then we need to
-//       // cancel the reader - we don't need the rest.
-//       reader.cancel()
-//     }
+      if (!res.Body) {
+        // should not happen, but if it does, we need to resolve `undefined`
+        // for the blocks in this batch - they are not found.
+        for (const blocks of pendingBlocks.values()) {
+          blocks.forEach(b => b.resolve())
+        }
+        return
+      }
 
-//     // resolve `undefined` for any remaining blocks
-//     for (const blocks of pendingBlocks.values()) {
-//       blocks.forEach(b => b.resolve())
-//     }
-//   }
+      const reader = res.Body.transformToWebStream().getReader()
+      const bytesReader = asyncIterableReader((async function * () {
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) return
+          yield value
+        }
+      })())
 
-//   /** @param {CID} cid */
-//   async get (cid) {
-//     // console.log(`get ${cid}`)
-//     const multiIdxEntry = await this._idx.get(cid)
-//     if (!multiIdxEntry) return
+      const bytes = await bytesReader.exactly(batch[0].length)
+      bytesReader.seek(batch[0].length)
+      resolvePendingBlock(batch[0].cid, bytes)
 
-//     const [carCid, entry] = multiIdxEntry
-//     this.#batcher.add({ carCid, blockCid: cid, offset: entry.offset })
+      while (true) {
+        try {
+          const blockHeader = await readBlockHead(bytesReader)
+          const bytes = await bytesReader.exactly(blockHeader.blockLength)
+          bytesReader.seek(blockHeader.blockLength)
+          resolvePendingBlock(blockHeader.cid, bytes)
+        } catch {
+          break
+        }
+      }
+      // we should have read all the bytes from the reader by now but if the
+      // bytesReader throws for bad data _before_ the end then we need to
+      // cancel the reader - we don't need the rest.
+      reader.cancel()
+    }
 
-//     if (!entry.multihash) throw new Error('missing entry multihash')
-//     const key = mhToKey(entry.multihash.bytes)
-//     let blocks = this.#pendingBlocks.get(key)
-//     if (!blocks) {
-//       blocks = []
-//       this.#pendingBlocks.set(key, blocks)
-//     }
-//     const deferred = defer()
-//     blocks.push(deferred)
-//     this.#scheduleBatchProcessing()
-//     return deferred.promise
-//   }
-// }
+    // resolve `undefined` for any remaining blocks
+    for (const blocks of pendingBlocks.values()) {
+      blocks.forEach(b => b.resolve())
+    }
+  }
 
-// const mhToKey = (/** @type {Uint8Array} */ mh) => base58btc.encode(mh)
+  /** @param {import('multiformats').UnknownLink} cid */
+  async get (cid) {
+    // console.log(`get ${cid}`)
+    const idxEntries = await this._idx.get(cid)
+    if (!idxEntries.length) return
+
+    this.#batcher.add(cid, idxEntries)
+    const key = mhToKey(cid.multihash.bytes)
+    let blocks = this.#pendingBlocks.get(key)
+    if (!blocks) {
+      blocks = []
+      this.#pendingBlocks.set(key, blocks)
+    }
+
+    const deferred = defer()
+    blocks.push(deferred)
+    this.#scheduleBatchProcessing()
+    return deferred.promise
+  }
+}
+
+const mhToKey = (/** @type {Uint8Array} */ mh) => base58btc.encode(mh)
