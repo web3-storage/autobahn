@@ -1,10 +1,10 @@
 /* eslint-env browser */
 import { Dagula } from 'dagula'
-import { CarReader } from '@ipld/car'
-import { HttpError, toIterable } from '@web3-storage/gateway-lib/util'
-import { DynamoBlockstore } from './lib/blockstore.js'
-import { version } from '../package.json'
+import { HttpError } from '@web3-storage/gateway-lib/util'
 import { S3Client } from '@aws-sdk/client-s3'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { SimpleDynamoBlockstore } from './lib/blockstore.js'
+import pkg from '../package.json' assert { type: 'json' }
 
 /**
  * @typedef {import('./bindings.js').Environment} Environment
@@ -32,25 +32,36 @@ export function withUnsupportedFeaturesHandler (handler) {
 
 /**
  * Instantiates a DynamoDB client from the environment variables.
- * @type {import('@web3-storage/gateway-lib').Middleware<DynamoContext, import('@web3-storage/gateway-lib').Context>}
+ * @type {import('@web3-storage/gateway-lib').Middleware<DynamoContext, import('@web3-storage/gateway-lib').Context, Environment>}
  */
 export function withDynamoClient (handler) {
-
+  return async (request, env, ctx) => {
+    if (!env.DYNAMO_REGION) throw new Error('missing environment variable: DYNAMO_REGION')
+    if (!env.DYNAMO_TABLE) throw new Error('missing environment variable: DYNAMO_TABLE')
+    const credentials = getAwsCredentials(env)
+    const dynamoClient = new DynamoDBClient({ region: env.DYNAMO_REGION, credentials })
+    return handler(request, env, { ...ctx, dynamoClient, dynamoTable: env.DYNAMO_TABLE })
+  }
 }
 
 /**
  * Instantiates regional S3 clients from the environment variables.
- * @type {import('@web3-storage/gateway-lib').Middleware<DynamoContext, import('@web3-storage/gateway-lib').Context>}
+ * @type {import('@web3-storage/gateway-lib').Middleware<S3Context, import('@web3-storage/gateway-lib').Context, Environment>}
  */
 export function withS3Clients (handler) {
   return async (request, env, ctx) => {
-    /** @type {import('./bindings.js').RegionalS3Clients} */
-    const s3Clients = {
-      'us-west-2': new S3Client({ region: 'us-west-2' }),
-      'us-east-2': new S3Client({ region: 'us-east-2' })
-    }
+    const regions = env.S3_REGIONS ? env.S3_REGIONS.split(',') : ['us-west-2', 'us-east-2']
+    const credentials = getAwsCredentials(env)
+    const s3Clients = Object.fromEntries(regions.map(r => [r, new S3Client({ region: r, credentials })]))
     return handler(request, env, { ...ctx, s3Clients })
   }
+}
+
+/** @param {Environment} env */
+function getAwsCredentials (env) {
+  const accessKeyId = env.AWS_ACCESS_KEY_ID
+  const secretAccessKey = env.AWS_SECRET_ACCESS_KEY
+  return accessKeyId && secretAccessKey ? { accessKeyId, secretAccessKey } : undefined
 }
 
 /**
@@ -59,8 +70,7 @@ export function withS3Clients (handler) {
  */
 export function withDagula (handler) {
   return async (request, env, ctx) => {
-    /** @type {import('dagula').Blockstore?} */
-    const blockstore = new DynamoBlockstore(ctx.dynamoClient, ctx.s3Clients)
+    const blockstore = new SimpleDynamoBlockstore(ctx.dynamoClient, ctx.dynamoTable, ctx.s3Clients)
     const dagula = new Dagula(blockstore)
     return handler(request, env, { ...ctx, dagula })
   }
@@ -72,7 +82,7 @@ export function withDagula (handler) {
 export function withVersionHeader (handler) {
   return async (request, env, ctx) => {
     const response = await handler(request, env, ctx)
-    response.headers.set('x-autobahn-version', version)
+    response.headers.set('x-autobahn-version', pkg.version)
     return response
   }
 }

@@ -4,7 +4,6 @@ import {
   withContentDispositionHeader,
   withErrorHandler,
   withHttpGet,
-  withCdnCache,
   withParsedIpfsUrl,
   composeMiddleware
 } from '@web3-storage/gateway-lib/middleware'
@@ -15,6 +14,8 @@ import {
 } from '@web3-storage/gateway-lib/handlers'
 import {
   withDagula,
+  withDynamoClient,
+  withS3Clients,
   withUnsupportedFeaturesHandler,
   withVersionHeader
 } from './middleware.js'
@@ -22,7 +23,6 @@ import {
 /**
  * @typedef {import('./bindings.js').Environment} Environment
  * @typedef {import('@web3-storage/gateway-lib').IpfsUrlContext} IpfsUrlContext
- * @typedef {import('./bindings.js').CarCidsContext} CarCidsContext
  * @typedef {import('@web3-storage/gateway-lib').DagulaContext} DagulaContext
  */
 
@@ -31,7 +31,6 @@ export default {
   fetch (request, env, ctx) {
     console.log(request.method, request.url)
     const middleware = composeMiddleware(
-      withCdnCache,
       withCorsHeaders,
       withVersionHeader,
       withContentDispositionHeader,
@@ -39,13 +38,15 @@ export default {
       withUnsupportedFeaturesHandler,
       withHttpGet,
       withParsedIpfsUrl,
+      withDynamoClient,
+      withS3Clients,
       withDagula
     )
     return middleware(handler)(request, env, ctx)
   }
 }
 
-/** @type {import('@web3-storage/gateway-lib').Handler<DagulaContext & CarCidsContext & IpfsUrlContext, Environment>} */
+/** @type {import('@web3-storage/gateway-lib').Handler<DagulaContext & IpfsUrlContext, Environment>} */
 async function handler (request, env, ctx) {
   const { headers } = request
   const { searchParams } = ctx
