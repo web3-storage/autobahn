@@ -1,3 +1,5 @@
+/* global awslambda */
+
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import autobahn from '@web3-storage/autobahn-core/index.js'
