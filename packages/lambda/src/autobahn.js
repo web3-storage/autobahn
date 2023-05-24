@@ -112,17 +112,16 @@ export async function getHome (evt, res) {
 /**
  * @param {import('aws-lambda').APIGatewayProxyEventV2} evt
  * @param {import('lambda-stream').ResponseStream} res
- * @param {import('aws-lambda').Context} ctx
  */
-export async function get404 (evt, res, ctx) {
-  // res.setContentType(text)
-  // // @ts-expect-error
-  // res.statusCode = 404
-  // res.write('\n 404 🦖 \n')
-  const error = new Error('Not Found')
-  // @ts-expect-error
-  error.statusCode = 404
-  ctx.fail(error)
+export async function get404 (evt, res) {
+  const metadata = {
+    statusCode: 404
+  }
+  // @ts-expect-error awslambda is a global
+  res = awslambda.HttpResponseStream.from(res, metadata)
+  res.setContentType(text)
+  res.write('\n 404 🦖 \n')
+  res.end()
 }
 
 // export const home = Sentry.AWSLambda.wrapHandler(homeGet)
