@@ -1,6 +1,5 @@
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
-import { streamifyResponse } from 'lambda-stream'
 import autobahn from '@web3-storage/autobahn-core/index.js'
 
 // import * as Sentry from '@sentry/serverless'
@@ -38,7 +37,8 @@ export async function _handler (event, res, ctx) {
   return get404(event, res, ctx)
 }
 
-export const handler = streamifyResponse(_handler)
+// @ts-expect-error awslambda is a global
+export const handler = awslambda.streamifyResponse(_handler)
 
 /**
  * @param {import('aws-lambda').APIGatewayProxyEventV2} evt
