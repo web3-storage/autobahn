@@ -1,4 +1,10 @@
 node_modules
 dist
-.mf
+
+# sst
+.sst
+.build
+
+# local env files
+.env*.local
 .env

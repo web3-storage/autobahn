@@ -1,0 +1,16 @@
+{
+  "name": "@web3-storage/autobahn-lambda",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "sst bind ava",
+    "tsc": "tsc"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.115",
+    "sst": "^2.8.28"
+  },
+  "dependencies": {
+    "lambda-stream": "^0.3.0"
+  }
+}
