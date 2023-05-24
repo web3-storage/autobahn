@@ -47,7 +47,9 @@ export const handler = awslambda.streamifyResponse(_handler)
  * @param {import('lambda-stream').ResponseStream} res
  */
 export async function getIpfs (evt, res) {
-  const url = new URL(evt.rawPath || '', `http://${evt.headers.host}`)
+  const pathname = evt.rawPath || ''
+  const search = evt.rawQueryString ? `?${evt.rawQueryString}` : ''
+  const url = new URL(`${pathname}${search}`, `http://${evt.headers.host}`)
   const headers = new Headers()
   for (const [k, v] of Object.entries(evt.headers)) {
     if (v == null) continue
