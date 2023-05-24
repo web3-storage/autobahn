@@ -52,9 +52,9 @@ export async function getIpfs (evt, res) {
   const request = new Request(url, { method, headers, body })
   const env = {
     DEBUG: process.env.DEBUG ?? 'false',
-    DYNAMO_REGION: 'us-west-2',
-    DYNAMO_TABLE: 'prod-ep-v1-blocks-cars-position',
-    S3_REGIONS: 'us-east-2,us-west-2'
+    DYNAMO_REGION: process.env.DYNAMO_REGION,
+    DYNAMO_TABLE: process.env.DYNAMO_TABLE,
+    S3_REGIONS: process.env.S3_REGIONS
   }
   const ctx = { waitUntil: () => {} }
   // @ts-expect-error

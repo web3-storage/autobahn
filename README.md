@@ -27,10 +27,10 @@ To work on this codebase **you need**:
 
 - Node.js >= v18 (prod env is node v18)
 - An AWS account with the AWS CLI configured locally
-- Copy `.env.tpl` to `.env.local`
+- Copy `.env.tpl` to `.env`
 - Install the deps with `npm i`
 
-Deploy dev services to your aws account and start dev console
+Deploy dev services to your aws account and start dev console. You may need to provide a `--profile` to pick the aws profile to deploy with.
 
 ```console
 npm start

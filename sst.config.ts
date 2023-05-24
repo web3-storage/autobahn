@@ -6,7 +6,7 @@ export default {
   config(_input) {
     return {
       name: "autobahn",
-      region: "us-east-1",
+      region: "us-west-2",
     };
   },
   stacks(app) {

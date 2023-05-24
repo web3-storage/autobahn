@@ -1,23 +1,20 @@
 import { Function } from 'sst/constructs'
 import { getApiPackageJson, getGitInfo } from './config.js'
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 /**
  * @param {import('sst/constructs').StackContext} config
  */
 export function API ({ stack }) {
-  const SENTRY_DSN = process.env.SENTRY_DSN ?? ''
+  const { SENTRY_DSN, DYNAMO_REGION, DYNAMO_TABLE, S3_REGIONS } = process.env
+  if (!DYNAMO_REGION || !DYNAMO_TABLE || !S3_REGIONS) {
+    throw new Error('DYNAMO_REGION, DYNAMO_TABLE, S3_REGIONS required in env')
+  }
   const pkg = getApiPackageJson()
   const git = getGitInfo()
   stack.setDefaultFunctionProps({
-    environment: {
-      SENTRY_DSN,
-      NAME: pkg.name,
-      REPO: pkg.homepage,
-      VERSION: pkg.version,
-      BRANCH: git.branch,
-      COMMIT: git.commit,
-      STAGE: stack.stage
-    },
     memorySize: '1 GB',
     runtime: 'nodejs18.x',
     architecture: 'arm_64',
@@ -31,6 +28,18 @@ export function API ({ stack }) {
     url: {
       cors: true,
       authorizer: 'none'
+    },
+    environment: {
+      NAME: pkg.name,
+      REPO: pkg.homepage,
+      VERSION: pkg.version,
+      BRANCH: git.branch,
+      COMMIT: git.commit,
+      STAGE: stack.stage,
+      SENTRY_DSN: SENTRY_DSN ?? '',
+      DYNAMO_REGION,
+      DYNAMO_TABLE,
+      S3_REGIONS
     }
   })
 
