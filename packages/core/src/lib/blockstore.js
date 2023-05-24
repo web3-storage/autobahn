@@ -120,7 +120,7 @@ export class BatchingDynamoBlockstore extends DynamoBlockstore {
 
       console.log(`fetching ${batch.length} blocks from s3://${region}/${bucket}/${key} (${range})`)
       const s3Client = this._buckets[region]
-      if (!s3Client) return
+      if (!s3Client) break
 
       const res = await retry(async () => {
         const command = new GetObjectCommand({
@@ -130,15 +130,7 @@ export class BatchingDynamoBlockstore extends DynamoBlockstore {
         })
         return await s3Client.send(command)
       }, { minTimeout: 100, onFailedAttempt: err => console.warn(`failed S3 query for: s3://${region}/${bucket}/${key} (${range})`, err) })
-
-      if (!res.Body) {
-        // should not happen, but if it does, we need to resolve `undefined`
-        // for the blocks in this batch - they are not found.
-        for (const blocks of pendingBlocks.values()) {
-          blocks.forEach(b => b.resolve())
-        }
-        return
-      }
+      if (!res.Body) break
 
       const reader = res.Body.transformToWebStream().getReader()
       const bytesReader = asyncIterableReader((async function * () {
