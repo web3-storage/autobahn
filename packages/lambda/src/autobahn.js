@@ -46,7 +46,11 @@ export const handler = streamifyResponse(_handler)
  */
 export async function getIpfs (evt, res) {
   const url = new URL(evt.rawPath || '', `http://${evt.headers.host}`)
-  const headers = new Headers(Object.entries(Headers))
+  const headers = new Headers()
+  for (const [k, v] of Object.entries(evt.headers)) {
+    if (v == null) continue
+    headers.append(k, v)
+  }
   const method = evt.requestContext.http.method
   const body = undefined
   const request = new Request(url, { method, headers, body })
