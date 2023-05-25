@@ -40,7 +40,7 @@
   "standard": {
     "ignore": [
       "*.ts",
-      "packages/core/src/middleware.js"
+      "packages/core/src/package.js"
     ]
   },
   "main": "index.js",

@@ -4,7 +4,7 @@ import { HttpError } from '@web3-storage/gateway-lib/util'
 import { S3Client } from '@aws-sdk/client-s3'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { BatchingDynamoBlockstore } from './lib/blockstore.js'
-import pkg from '../package.json' assert { type: 'json' }
+import pkg from './package.js'
 
 /**
  * @typedef {import('./bindings.js').Environment} Environment
