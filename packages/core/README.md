@@ -15,8 +15,8 @@ DYNAMO_REGION=us-west-2
 # Name of the "blocks-cars-position" table in DynamoDB
 DYNAMO_TABLE=prod-ep-v1-blocks-cars-position
 
-# CSV S3 regions of buckets that CAR files are stored in (optional)
-S3_REGIONS=us-east-2,us-west-2
+# (optional) CSV S3 regions of buckets that CAR files are stored in
+S3_REGIONS=us-east-1,us-east-2,us-west-2
 
 # (optional) preferred region to fetch data from - typically same place as
 # where the lambda is running

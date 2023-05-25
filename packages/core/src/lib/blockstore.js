@@ -123,7 +123,10 @@ export class BatchingDynamoBlockstore extends DynamoBlockstore {
 
       console.log(`fetching ${batch.length} blocks from s3://${region}/${bucket}/${key} (${range})`)
       const s3Client = this._buckets[region]
-      if (!s3Client) break
+      if (!s3Client) {
+        console.warn(`missing S3 client for region: ${region}`)
+        break
+      }
 
       const res = await retry(async () => {
         const command = new GetObjectCommand({
