@@ -32,10 +32,10 @@ test.beforeEach(async t => {
   t.context.dispatchFetch = createFetchDispatcher(t.context)
 })
 
-test.after(t => {
-  t.context.s3.container.stop()
-  t.context.dynamo.container.stop()
-})
+// test.after(t => {
+//   t.context.s3.container.stop()
+//   t.context.dynamo.container.stop()
+// })
 
 test('should get a file', async t => {
   const input = new Blob([randomBytes(256)])
@@ -60,7 +60,7 @@ test('should get a file in a directory', async t => {
   await sameBytes(t, res, input[0])
 })
 
-test.skip('should get a big file', async t => {
+test('should get a big file', async t => {
   const input = [new File([randomBytes(609261780)], 'sargo.tar.xz')]
   const root = await t.context.builder.add(input)
 
