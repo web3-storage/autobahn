@@ -50,7 +50,7 @@ export function withDynamoClient (handler) {
  */
 export function withS3Clients (handler) {
   return async (request, env, ctx) => {
-    const regions = env.S3_REGIONS ? env.S3_REGIONS.split(',') : ['us-west-2', 'us-east-2']
+    const regions = env.S3_REGIONS ? env.S3_REGIONS.split(',') : ['us-west-2', 'us-east-1', 'us-east-2']
     const credentials = getAwsCredentials(env)
     const s3Clients = Object.fromEntries(regions.map(r => [r, new S3Client({ region: r, credentials })]))
     return handler(request, env, { ...ctx, s3Clients })
