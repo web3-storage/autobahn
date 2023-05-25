@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "start": "sst dev",
-    "test": "npm run test -w packages/core",
+    "test": "npm run test --workspaces",
     "pretest": "standard && tsc",
     "prepare": "sst build && tsc",
     "lint": "standard",

@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node test/helpers/server.js",
-    "test": "ava --verbose --timeout=5m",
+    "test": "ava --verbose --timeout=5m --no-worker-threads --serial",
     "lint": "standard"
   },
   "keywords": [
