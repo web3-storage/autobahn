@@ -55,15 +55,15 @@ export class DynamoIndex {
       const [region, bucket, ...rest] = carpath.split('/')
       return { region, bucket, key: rest.join('/'), offset, length }
     })
-    if (this.#preferRegion) {
-      const region = this.#preferRegion
+    const region = this.#preferRegion
+    if (region) {
       items.sort((a, b) => {
         if (a.region === region && b.region !== region) return -1
         if (a.region !== region && b.region === region) return 1
         return 0
       })
-      console.log(items)
     }
+    console.log(cid.toString(), items)
     return items
   }
 }
