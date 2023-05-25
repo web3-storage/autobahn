@@ -21,11 +21,14 @@ export class DynamoBlockstore {
    * @param {import('@aws-sdk/client-dynamodb').DynamoDBClient} dynamoClient
    * @param {string} dynamoTable
    * @param {import('../bindings').RegionalS3Clients} s3Clients
+   * @param {object} [options]
+   * @param {string} [options.preferRegion] Preferred region to fetch data
+   * from, typically the same region as where the service is running.
    */
-  constructor (dynamoClient, dynamoTable, s3Clients) {
+  constructor (dynamoClient, dynamoTable, s3Clients, options) {
     this._buckets = s3Clients
     /** @type {import('./block-index').BlockIndex} */
-    this._idx = new DynamoIndex(dynamoClient, dynamoTable)
+    this._idx = new DynamoIndex(dynamoClient, dynamoTable, options)
   }
 
   /** @param {import('multiformats').UnknownLink} cid */

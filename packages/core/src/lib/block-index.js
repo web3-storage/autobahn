@@ -13,6 +13,7 @@ export class DynamoIndex {
   #client
   #table
   #max
+  #preferRegion
 
   /**
    * @param {import('@aws-sdk/client-dynamodb').DynamoDBClient} client
@@ -20,11 +21,14 @@ export class DynamoIndex {
    * @param {object} [options]
    * @param {number} [options.maxEntries] Max entries to return when multiple
    * CAR files contain the same block.
+   * @param {string} [options.preferRegion] Preferred region to place first in
+   * results.
    */
   constructor (client, table, options) {
     this.#client = client
     this.#table = table
     this.#max = options?.maxEntries ?? 5
+    this.#preferRegion = options?.preferRegion
   }
 
   /**
@@ -46,10 +50,19 @@ export class DynamoIndex {
       })
       return await this.#client.send(command)
     }, { minTimeout: 100, onFailedAttempt: err => console.warn(`failed DynamoDB request for: ${cid}`, err) })
-    return (res.Items ?? []).map(item => {
+    const items = (res.Items ?? []).map(item => {
       const { carpath, offset, length } = unmarshall(item)
       const [region, bucket, ...rest] = carpath.split('/')
       return { region, bucket, key: rest.join('/'), offset, length }
     })
+    const region = this.#preferRegion
+    if (region) {
+      items.sort((a, b) => {
+        if (a.region === region && b.region !== region) return -1
+        if (a.region !== region && b.region === region) return 1
+        return 0
+      })
+    }
+    return items
   }
 }

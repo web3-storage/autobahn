@@ -70,7 +70,7 @@ function getAwsCredentials (env) {
  */
 export function withDagula (handler) {
   return async (request, env, ctx) => {
-    const blockstore = new BatchingDynamoBlockstore(ctx.dynamoClient, ctx.dynamoTable, ctx.s3Clients)
+    const blockstore = new BatchingDynamoBlockstore(ctx.dynamoClient, ctx.dynamoTable, ctx.s3Clients, { preferRegion: env.PREFER_REGION })
     const dagula = new Dagula(blockstore)
     return handler(request, env, { ...ctx, dagula })
   }
