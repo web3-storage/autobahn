@@ -1,44 +1,45 @@
 /* eslint-env browser */
 import anyTest from 'ava'
-import autobahn from '../src/index.js'
-import { Builder } from './helpers/builder.js'
-import { createDynamo, createDynamoTable, createS3, createS3Bucket } from './helpers/aws.js'
+// import autobahn from '../src/index.js'
+// import { Builder } from './helpers/builder.js'
+// import { createDynamo, createDynamoTable, createS3, createS3Bucket } from './helpers/aws.js'
 
-/**
- * @typedef {{
- *   s3: import('./helpers/aws').TestAwsService<import('@aws-sdk/client-s3').S3Client>
- *   s3Bucket: string
- *   dynamo: import('./helpers/aws').TestAwsService<import('@aws-sdk/client-dynamodb').DynamoDBClient>
- *   dynamoTable: string
- *   builder: Builder
- *   dispatchFetch: ReturnType<createFetchDispatcher>
- * }} TestContext
- */
+// /**
+//  * @typedef {{
+//  *   s3: import('./helpers/aws').TestAwsService<import('@aws-sdk/client-s3').S3Client>
+//  *   s3Bucket: string
+//  *   dynamo: import('./helpers/aws').TestAwsService<import('@aws-sdk/client-dynamodb').DynamoDBClient>
+//  *   dynamoTable: string
+//  *   builder: Builder
+//  *   dispatchFetch: ReturnType<createFetchDispatcher>
+//  * }} TestContext
+//  */
 
-const test = /** @type {import('ava').TestFn<TestContext>} */ (anyTest)
+// const test = /** @type {import('ava').TestFn<TestContext>} */ (anyTest)
+const test = anyTest
 
-test.before(async t => {
-  t.context.s3 = await createS3()
-  t.context.dynamo = await createDynamo()
-})
+// test.before(async t => {
+//   t.context.s3 = await createS3()
+//   t.context.dynamo = await createDynamo()
+// })
 
-test.beforeEach(async t => {
-  t.context.s3Bucket = await createS3Bucket(t.context.s3.client)
-  t.context.dynamoTable = await createDynamoTable(t.context.dynamo.client)
-  t.context.builder = new Builder(t.context.dynamo.client, t.context.dynamoTable, t.context.s3.client, t.context.s3.region, t.context.s3Bucket)
-  t.context.dispatchFetch = createFetchDispatcher(t.context)
-})
+// test.beforeEach(async t => {
+//   t.context.s3Bucket = await createS3Bucket(t.context.s3.client)
+//   t.context.dynamoTable = await createDynamoTable(t.context.dynamo.client)
+//   t.context.builder = new Builder(t.context.dynamo.client, t.context.dynamoTable, t.context.s3.client, t.context.s3.region, t.context.s3Bucket)
+//   t.context.dispatchFetch = createFetchDispatcher(t.context)
+// })
 
-test.after(async t => {
-  try {
-    await Promise.all([
-      t.context.s3.container.stop(),
-      t.context.dynamo.container.stop()
-    ])
-  } catch (err) {
-    console.error(err)
-  }
-})
+// test.after(async t => {
+//   try {
+//     await Promise.all([
+//       t.context.s3.container.stop(),
+//       t.context.dynamo.container.stop()
+//     ])
+//   } catch (err) {
+//     console.error(err)
+//   }
+// })
 
 test('a test', async t => {
   await new Promise(resolve => setTimeout(resolve, 1000))
@@ -95,26 +96,26 @@ test('a test', async t => {
 //   await t.notThrowsAsync(CarReader.fromBytes(output))
 // })
 
-/** @param {TestContext} context */
-function createFetchDispatcher (context) {
-  /**
-   * @param {URL|string} url
-   * @param {RequestInit} [init]
-   */
-  return (url, init) => {
-    const request = new Request(url, init)
-    const env = {
-      DEBUG: 'true',
-      AWS_ACCESS_KEY_ID: context.s3.credentials?.accessKeyId,
-      AWS_SECRET_ACCESS_KEY: context.s3.credentials?.secretAccessKey,
-      DYNAMO_ENDPOINT: context.dynamo.endpoint,
-      DYNAMO_REGION: context.dynamo.region,
-      DYNAMO_TABLE: context.dynamoTable,
-      S3_ENDPOINT: context.s3.endpoint,
-      S3_REGIONS: context.s3.region,
-      PREFER_REGION: context.s3.region
-    }
-    const ctx = { waitUntil: () => {} }
-    return autobahn.fetch(request, env, ctx)
-  }
-}
+// /** @param {TestContext} context */
+// function createFetchDispatcher (context) {
+//   /**
+//    * @param {URL|string} url
+//    * @param {RequestInit} [init]
+//    */
+//   return (url, init) => {
+//     const request = new Request(url, init)
+//     const env = {
+//       DEBUG: 'true',
+//       AWS_ACCESS_KEY_ID: context.s3.credentials?.accessKeyId,
+//       AWS_SECRET_ACCESS_KEY: context.s3.credentials?.secretAccessKey,
+//       DYNAMO_ENDPOINT: context.dynamo.endpoint,
+//       DYNAMO_REGION: context.dynamo.region,
+//       DYNAMO_TABLE: context.dynamoTable,
+//       S3_ENDPOINT: context.s3.endpoint,
+//       S3_REGIONS: context.s3.region,
+//       PREFER_REGION: context.s3.region
+//     }
+//     const ctx = { waitUntil: () => {} }
+//     return autobahn.fetch(request, env, ctx)
+//   }
+// }
