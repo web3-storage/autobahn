@@ -157,6 +157,8 @@ export class BatchingDynamoBlockstore extends DynamoBlockstore {
           const bytes = await bytesReader.exactly(blockHeader.blockLength)
           bytesReader.seek(blockHeader.blockLength)
           resolvePendingBlock(blockHeader.cid, bytes)
+          // remove from batcher if queued to be read
+          batcher.remove(blockHeader.cid)
         } catch {
           break
         }

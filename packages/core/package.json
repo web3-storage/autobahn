@@ -5,11 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "npm run dev",
-    "dev": "npm run build:debug && miniflare dist/worker.mjs --watch --debug -m --r2-persist",
-    "build": "esbuild --bundle src/index.js --format=esm --sourcemap --minify --outfile=dist/worker.mjs",
-    "build:debug": "esbuild --bundle src/index.js --format=esm --outfile=dist/worker.mjs",
-    "test": "npm run build:debug && node --test --experimental-vm-modules",
+    "start": "node test/helpers/server.js",
+    "test": "ava --verbose --timeout=5m",
     "lint": "standard"
   },
   "keywords": [
@@ -42,13 +39,11 @@
     "streaming-iterables": "^7.1.0"
   },
   "devDependencies": {
+    "@web3-storage/upload-client": "^9.0.1",
     "ava": "^5.2.0",
-    "carbites": "^1.0.6",
     "esbuild": "^0.17.11",
-    "files-from-path": "^0.2.6",
-    "ipfs-car": "^0.9.2",
-    "miniflare": "^2.9.0",
+    "nanoid": "^4.0.2",
     "standard": "^17.0.0",
-    "uint8arrays": "^4.0.3"
+    "testcontainers": "^9.8.0"
   }
 }

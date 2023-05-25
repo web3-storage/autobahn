@@ -6,7 +6,11 @@ const MAX_BATCH_SIZE = 10
  * @typedef {{ offset: number, length: number }} Range
  * @typedef {ObjectID & Range} BlockLocation
  * @typedef {{ cid: import('multiformats').UnknownLink } & ObjectID & Range} BatchItem
- * @typedef {{ add: (cid: import('multiformats').UnknownLink, i: BlockLocation[]) => void, next: () => BatchItem[] }} BlockBatcher
+ * @typedef {{
+ *   add: (cid: import('multiformats').UnknownLink, i: BlockLocation[]) => void
+ *   remove: (cid: import('multiformats').UnknownLink) => void
+ *   next: () => BatchItem[]
+ * }} BlockBatcher
  */
 
 /**
@@ -29,6 +33,11 @@ export class OrderedCarBlockBatcher {
     // find a location in the same CAR as the previously added location
     const loc = locations.find(l => isSameCar(l, last)) ?? locations[0]
     this.#queue.push({ cid, ...loc })
+  }
+
+  /** @param {import('multiformats').UnknownLink} cid */
+  remove (cid) {
+    this.#queue = this.#queue.filter(item => item.cid.toString() !== cid.toString())
   }
 
   next () {

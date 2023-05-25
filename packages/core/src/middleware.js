@@ -39,7 +39,8 @@ export function withDynamoClient (handler) {
     if (!env.DYNAMO_REGION) throw new Error('missing environment variable: DYNAMO_REGION')
     if (!env.DYNAMO_TABLE) throw new Error('missing environment variable: DYNAMO_TABLE')
     const credentials = getAwsCredentials(env)
-    const dynamoClient = new DynamoDBClient({ region: env.DYNAMO_REGION, credentials })
+    const endpoint = env.DYNAMO_ENDPOINT
+    const dynamoClient = new DynamoDBClient({ endpoint, region: env.DYNAMO_REGION, credentials })
     return handler(request, env, { ...ctx, dynamoClient, dynamoTable: env.DYNAMO_TABLE })
   }
 }
@@ -51,8 +52,10 @@ export function withDynamoClient (handler) {
 export function withS3Clients (handler) {
   return async (request, env, ctx) => {
     const regions = env.S3_REGIONS ? env.S3_REGIONS.split(',') : ['us-west-2', 'us-east-1', 'us-east-2']
+    const endpoint = env.S3_ENDPOINT
     const credentials = getAwsCredentials(env)
-    const s3Clients = Object.fromEntries(regions.map(r => [r, new S3Client({ region: r, credentials })]))
+    const config = { endpoint, forcePathStyle: !!endpoint, credentials }
+    const s3Clients = Object.fromEntries(regions.map(r => [r, new S3Client({ ...config, region: r })]))
     return handler(request, env, { ...ctx, s3Clients })
   }
 }
