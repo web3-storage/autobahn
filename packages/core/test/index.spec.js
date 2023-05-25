@@ -29,9 +29,15 @@ test.beforeEach(async t => {
   t.context.dispatchFetch = createFetchDispatcher(t.context)
 })
 
-test.after(t => {
-  t.context.s3.container.stop()
-  t.context.dynamo.container.stop()
+test.after(async t => {
+  try {
+    await Promise.all([
+      t.context.s3.container.stop(),
+      t.context.dynamo.container.stop()
+    ])
+  } catch (err) {
+    console.error(err)
+  }
 })
 
 test('a test', async t => {
