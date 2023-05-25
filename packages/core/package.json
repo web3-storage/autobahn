@@ -39,6 +39,7 @@
     "streaming-iterables": "^7.1.0"
   },
   "devDependencies": {
+    "@web-std/file": "^3.0.2",
     "@web3-storage/upload-client": "^9.0.1",
     "ava": "^5.2.0",
     "esbuild": "^0.17.11",
