@@ -107,7 +107,7 @@ export class BatchingDynamoBlockstore extends DynamoBlockstore {
       const blocks = pendingBlocks.get(key)
       if (!blocks) return
       console.log(`got wanted block ${cid} (${pendingBlocks.size} remaining)`)
-      const block = { cid, bytes: bytes.slice() }
+      const block = { cid, bytes }
       blocks.forEach(b => b.resolve(block))
       pendingBlocks.delete(key)
     }
@@ -122,6 +122,7 @@ export class BatchingDynamoBlockstore extends DynamoBlockstore {
       const range = `bytes=${batch[0].offset}-${batch[batch.length - 1].offset + batch[batch.length - 1].length - 1}`
 
       console.log(`fetching ${batch.length} blocks from s3://${region}/${bucket}/${key} (${range})`)
+      console.log(batch)
       const s3Client = this._buckets[region]
       if (!s3Client) break
 
