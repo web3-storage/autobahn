@@ -107,7 +107,7 @@ export class BatchingDynamoBlockstore extends DynamoBlockstore {
       const blocks = pendingBlocks.get(key)
       if (!blocks) return
       console.log(`got wanted block ${cid} (${pendingBlocks.size} remaining)`)
-      const block = { cid, bytes }
+      const block = { cid, bytes: bytes.slice() }
       blocks.forEach(b => b.resolve(block))
       pendingBlocks.delete(key)
     }
