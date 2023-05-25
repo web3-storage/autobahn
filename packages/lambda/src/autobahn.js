@@ -62,7 +62,8 @@ export async function getIpfs (evt, res) {
     DEBUG: process.env.DEBUG ?? 'false',
     DYNAMO_REGION: process.env.DYNAMO_REGION,
     DYNAMO_TABLE: process.env.DYNAMO_TABLE,
-    S3_REGIONS: process.env.S3_REGIONS
+    S3_REGIONS: process.env.S3_REGIONS,
+    PREFER_REGION: process.env.AWS_REGION
   }
   const ctx = { waitUntil: () => {} }
   // @ts-expect-error
