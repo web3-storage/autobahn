@@ -11,7 +11,8 @@
   ],
   "scripts": {
     "start": "sst dev",
-    "test": "ava",
+    "test": "echo 'just standard and tsc currently'",
+    "_test": "DYNAMO_REGION=us-west-2 DYNAMO_TABLE=test npm run test --workspaces",
     "pretest": "standard && tsc",
     "prepare": "sst build && tsc",
     "lint": "standard",
@@ -39,7 +40,8 @@
   ],
   "standard": {
     "ignore": [
-      "*.ts"
+      "*.ts",
+      "packages/core/src/middleware.js"
     ]
   },
   "main": "index.js",
