@@ -37,60 +37,55 @@ test.after(t => {
   t.context.dynamo.container.stop()
 })
 
-test('a test', async t => {
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  t.true(true)
+test('should get a file', async t => {
+  const input = new Blob([randomBytes(256)])
+  const root = await t.context.builder.add(input)
+
+  const res = await t.context.dispatchFetch(`http://localhost:8787/ipfs/${root}`)
+  if (!res.ok) t.fail(`unexpected response: ${await res.text()}`)
+
+  await sameBytes(t, res, input)
 })
 
-// test('should get a file', async t => {
-//   const input = new Blob([randomBytes(256)])
-//   const root = await t.context.builder.add(input)
+test('should get a file in a directory', async t => {
+  const input = [
+    new File([randomBytes(256)], 'data.txt'),
+    new File([randomBytes(512)], 'image.png')
+  ]
+  const root = await t.context.builder.add(input)
 
-//   const res = await t.context.dispatchFetch(`http://localhost:8787/ipfs/${root}`)
-//   if (!res.ok) t.fail(`unexpected response: ${await res.text()}`)
+  const res = await t.context.dispatchFetch(`http://localhost:8787/ipfs/${root}/${input[0].name}`)
+  if (!res.ok) t.fail(`unexpected response: ${await res.text()}`)
 
-//   await sameBytes(t, res, input)
-// })
+  await sameBytes(t, res, input[0])
+})
 
-// test('should get a file in a directory', async t => {
-//   const input = [
-//     new File([randomBytes(256)], 'data.txt'),
-//     new File([randomBytes(512)], 'image.png')
-//   ]
-//   const root = await t.context.builder.add(input)
+test('should get a big file', async t => {
+  const input = [new File([randomBytes(609261780)], 'sargo.tar.xz')]
+  const root = await t.context.builder.add(input)
 
-//   const res = await t.context.dispatchFetch(`http://localhost:8787/ipfs/${root}/${input[0].name}`)
-//   if (!res.ok) t.fail(`unexpected response: ${await res.text()}`)
+  const res = await t.context.dispatchFetch(`http://localhost:8787/ipfs/${root}/${input[0].name}`)
+  if (!res.ok) t.fail(`unexpected response: ${await res.text()}`)
 
-//   await sameBytes(t, res, input[0])
-// })
+  await sameBytes(t, res, input[0])
+})
 
-// test('should get a big file', async t => {
-//   const input = [new File([randomBytes(609261780)], 'sargo.tar.xz')]
-//   const root = await t.context.builder.add(input)
+test('should get a CAR via Accept headers', async t => {
+  const input = new Blob([randomBytes(256)])
+  const root = await t.context.builder.add(input)
 
-//   const res = await t.context.dispatchFetch(`http://localhost:8787/ipfs/${root}/${input[0].name}`)
-//   if (!res.ok) t.fail(`unexpected response: ${await res.text()}`)
+  const res = await t.context.dispatchFetch(`http://localhost:8787/ipfs/${root}`, {
+    headers: { Accept: 'application/vnd.ipld.car;order=dfs;' }
+  })
+  if (!res.ok) t.fail(`unexpected response: ${await res.text()}`)
 
-//   await sameBytes(t, res, input[0])
-// })
+  const contentType = res.headers.get('Content-Type')
+  t.true(contentType?.includes('application/vnd.ipld.car'))
+  t.true(contentType?.includes('order=dfs'))
 
-// test('should get a CAR via Accept headers', async t => {
-//   const input = new Blob([randomBytes(256)])
-//   const root = await t.context.builder.add(input)
-
-//   const res = await t.context.dispatchFetch(`http://localhost:8787/ipfs/${root}`, {
-//     headers: { Accept: 'application/vnd.ipld.car;order=dfs;' }
-//   })
-//   if (!res.ok) t.fail(`unexpected response: ${await res.text()}`)
-
-//   const contentType = res.headers.get('Content-Type')
-//   t.true(contentType?.includes('application/vnd.ipld.car'))
-//   t.true(contentType?.includes('order=dfs'))
-
-//   const output = new Uint8Array(await res.arrayBuffer())
-//   await t.notThrowsAsync(CarReader.fromBytes(output))
-// })
+  const output = new Uint8Array(await res.arrayBuffer())
+  await t.notThrowsAsync(CarReader.fromBytes(output))
+})
 
 /** @param {TestContext} context */
 function createFetchDispatcher (context) {
