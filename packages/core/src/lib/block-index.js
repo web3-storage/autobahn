@@ -63,7 +63,6 @@ export class DynamoIndex {
         return 0
       })
     }
-    console.log(cid.toString(), items)
     return items
   }
 }

@@ -122,7 +122,6 @@ export class BatchingDynamoBlockstore extends DynamoBlockstore {
       const range = `bytes=${batch[0].offset}-${batch[batch.length - 1].offset + batch[batch.length - 1].length - 1}`
 
       console.log(`fetching ${batch.length} blocks from s3://${region}/${bucket}/${key} (${range})`)
-      console.log(batch)
       const s3Client = this._buckets[region]
       if (!s3Client) break
 
@@ -175,10 +174,7 @@ export class BatchingDynamoBlockstore extends DynamoBlockstore {
   async get (cid) {
     // console.log(`get ${cid}`)
     const idxEntries = await this._idx.get(cid)
-    if (!idxEntries.length) {
-      console.warn(`dynamo has not indexed: ${cid}`)
-      return
-    }
+    if (!idxEntries.length) return
 
     this.#batcher.add(cid, idxEntries)
     const key = mhToKey(cid.multihash.bytes)
