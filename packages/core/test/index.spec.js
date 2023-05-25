@@ -33,9 +33,9 @@ test.beforeEach(async t => {
   t.context.dispatchFetch = createFetchDispatcher(t.context)
 })
 
-test.after(t => {
-  t.context.s3.container.stop()
-  t.context.dynamo.container.stop()
+test.after(async t => {
+  await t.context.s3.container.stop()
+  await t.context.dynamo.container.stop()
 })
 
 test('should get a file', async t => {
