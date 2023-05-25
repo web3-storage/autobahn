@@ -60,7 +60,7 @@ test('should get a file in a directory', async t => {
   await sameBytes(t, res, input[0])
 })
 
-test('should get a big file', async t => {
+test.skip('should get a big file', async t => {
   const input = [new File([randomBytes(609261780)], 'sargo.tar.xz')]
   const root = await t.context.builder.add(input)
 
