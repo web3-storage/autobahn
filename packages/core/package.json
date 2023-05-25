@@ -20,23 +20,18 @@
   "author": "Alan Shaw & Oli Evans",
   "license": "Apache-2.0 OR MIT",
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.338.0",
-    "@aws-sdk/client-s3": "^3.338.0",
-    "@aws-sdk/util-dynamodb": "^3.338.0",
+    "@aws-sdk/client-dynamodb": "3.226.0",
+    "@aws-sdk/client-s3": "3.226.0",
+    "@aws-sdk/util-dynamodb": "3.226.0",
     "@ipld/car": "^5.1.0",
     "@ipld/dag-cbor": "^9.0.0",
     "@ipld/dag-json": "^10.0.1",
     "@ipld/dag-pb": "^4.0.2",
     "@web3-storage/gateway-lib": "^3.1.0",
-    "cardex": "^1.0.1",
-    "chardet": "^1.5.0",
     "dagula": "^7.0.0",
     "dotenv": "^16.0.3",
-    "magic-bytes.js": "^1.0.12",
-    "mrmime": "^1.0.1",
     "multiformats": "^11.0.2",
-    "p-defer": "^4.0.0",
-    "streaming-iterables": "^7.1.0"
+    "p-defer": "^4.0.0"
   },
   "devDependencies": {
     "@web-std/file": "^3.0.2",
