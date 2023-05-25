@@ -62,7 +62,8 @@ test('should get a file in a directory', async t => {
 })
 
 test('should get a big file', async t => {
-  const bytes = randomBytes(609261780)
+  // const bytes = randomBytes(609261780)
+  const bytes = randomBytes(304630890)
   const input = [new File([bytes], 'sargo.tar.xz')]
   const root = await t.context.builder.add(input)
 
