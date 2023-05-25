@@ -1,4 +1,7 @@
-# autobahn 🏁
+<div align="center">
+  <img src="https://bafybeicrttclnbsndlwv7p4ijzlsx7zzchkk3ahsc4slptfpwk73aicibe.ipfs.w3s.link/logo-autobahn.png" width="150" />
+  <h1>autobahn</h1>
+</div>
 
 🧪 Experimental Trustless IPFS HTTP gateway providing access to UnixFS data via CAR CIDs.
 
