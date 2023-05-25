@@ -27,7 +27,7 @@ To work on this codebase **you need**:
 
 - Node.js >= v18 (prod env is node v18)
 - An AWS account with the AWS CLI configured locally
-- Copy `.env.tpl` to `.env`
+- Copy `.env.tpl` to `.env` and fill in the blanks
 - Install the deps with `npm i`
 
 Deploy dev services to your aws account and start dev console. You may need to provide a `--profile` to pick the aws profile to deploy with.
@@ -38,6 +38,23 @@ npm start
 
 See: https://docs.sst.dev for more info on how things get deployed.
 
+
+## Environment variables
+
+The following should be set in the env when deploying. Copy `.env.tpl` to `.env` to set in dev.
+
+```sh
+SENTRY_DSN=<your error reporting key here>
+
+# Name of the "blocks-cars-position" table in DynamoDB
+DYNAMO_TABLE=<table name here>
+
+# Region of the DynamoDB to query
+DYNAMO_REGION=us-west-2
+
+# (optional) CSV of S3 regions of buckets that CAR files are stored in
+S3_REGIONS=us-east-2,us-west-2
+```
 
 ## Contributing
 
