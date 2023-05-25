@@ -1,10 +1,9 @@
-import http from 'node:http'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import dotenv from 'dotenv'
 import autobahn from './index.js'
 
-/** @type {http.RequestListener} */
+/** @type {import('http').RequestListener} */
 export async function handler (req, res) {
   const url = new URL(req.url || '', `http://${req.headers.host}`)
   const headers = new Headers()

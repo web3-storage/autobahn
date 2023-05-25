@@ -18,7 +18,7 @@ import { OrderedCarBlockBatcher } from './block-batch.js'
  */
 export class DynamoBlockstore {
   /**
-   * @param {import('@aws-sdk/client-dynamodb').DynamoDBClient} dynamoClient 
+   * @param {import('@aws-sdk/client-dynamodb').DynamoDBClient} dynamoClient
    * @param {string} dynamoTable
    * @param {import('../bindings').RegionalS3Clients} s3Clients
    * @param {object} [options]
@@ -99,8 +99,8 @@ export class BatchingDynamoBlockstore extends DynamoBlockstore {
     this.#pendingBlocks = new Map()
 
     /**
-     * @param {import('multiformats').UnknownLink} cid 
-     * @param {Uint8Array} bytes 
+     * @param {import('multiformats').UnknownLink} cid
+     * @param {Uint8Array} bytes
      */
     const resolvePendingBlock = (cid, bytes) => {
       const key = mhToKey(cid.multihash.bytes)

@@ -16,7 +16,7 @@ export class DynamoIndex {
   #preferRegion
 
   /**
-   * @param {import('@aws-sdk/client-dynamodb').DynamoDBClient} client 
+   * @param {import('@aws-sdk/client-dynamodb').DynamoDBClient} client
    * @param {string} table
    * @param {object} [options]
    * @param {number} [options.maxEntries] Max entries to return when multiple
@@ -43,7 +43,7 @@ export class DynamoIndex {
         KeyConditions: {
           blockmultihash: {
             ComparisonOperator: 'EQ',
-            AttributeValueList: [{ S: base58btc.encode(cid.multihash.bytes) }],
+            AttributeValueList: [{ S: base58btc.encode(cid.multihash.bytes) }]
           }
         },
         AttributesToGet: ['carpath', 'length', 'offset']
