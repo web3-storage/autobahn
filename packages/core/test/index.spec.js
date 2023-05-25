@@ -62,13 +62,22 @@ test('should get a file in a directory', async t => {
 })
 
 test('should get a big file', async t => {
-  const input = [new File([randomBytes(609261780)], 'sargo.tar.xz')]
+  const bytes = randomBytes(609261780)
+  const input = [new File([bytes], 'sargo.tar.xz')]
   const root = await t.context.builder.add(input)
 
   const res = await t.context.dispatchFetch(`http://localhost:8787/ipfs/${root}/${input[0].name}`)
   if (!res.ok) t.fail(`unexpected response: ${await res.text()}`)
 
-  await sameBytes(t, res, input[0])
+  let offset = 0
+  // @ts-expect-error
+  for await (const chunk of res.body) {
+    for (let i = 0; i < chunk.length; i++) {
+      t.is(bytes[offset + i], chunk[i])
+    }
+    offset += chunk.length
+  }
+  t.is(offset, bytes.length)
 })
 
 test('should get a CAR via Accept headers', async t => {
