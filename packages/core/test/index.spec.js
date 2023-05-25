@@ -1,6 +1,5 @@
 /* eslint-env browser */
 import anyTest from 'ava'
-import { equals } from 'multiformats/bytes'
 import autobahn from '../src/index.js'
 import { Builder } from './helpers/builder.js'
 import { createDynamo, createDynamoTable, createS3, createS3Bucket } from './helpers/aws.js'
