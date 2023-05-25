@@ -3,7 +3,6 @@ import anyTest from 'ava'
 import { randomBytes } from 'node:crypto'
 import { equals } from 'multiformats/bytes'
 import { CarReader } from '@ipld/car'
-import { File } from '@web-std/file'
 import autobahn from '../src/index.js'
 import { Builder } from './helpers/builder.js'
 import { createDynamo, createDynamoTable, createS3, createS3Bucket } from './helpers/aws.js'
@@ -33,9 +32,9 @@ test.beforeEach(async t => {
   t.context.dispatchFetch = createFetchDispatcher(t.context)
 })
 
-test.after(async t => {
-  await t.context.s3.container.stop()
-  await t.context.dynamo.container.stop()
+test.after(t => {
+  t.context.s3.container.stop()
+  t.context.dynamo.container.stop()
 })
 
 test('should get a file', async t => {
@@ -62,23 +61,13 @@ test('should get a file in a directory', async t => {
 })
 
 test('should get a big file', async t => {
-  // const bytes = randomBytes(609261780)
-  const bytes = randomBytes(304630890)
-  const input = [new File([bytes], 'sargo.tar.xz')]
+  const input = [new File([randomBytes(609261780)], 'sargo.tar.xz')]
   const root = await t.context.builder.add(input)
 
   const res = await t.context.dispatchFetch(`http://localhost:8787/ipfs/${root}/${input[0].name}`)
   if (!res.ok) t.fail(`unexpected response: ${await res.text()}`)
 
-  let offset = 0
-  // @ts-expect-error
-  for await (const chunk of res.body) {
-    for (let i = 0; i < chunk.length; i++) {
-      t.is(bytes[offset + i], chunk[i])
-    }
-    offset += chunk.length
-  }
-  t.is(offset, bytes.length)
+  await sameBytes(t, res, input[0])
 })
 
 test('should get a CAR via Accept headers', async t => {
@@ -131,4 +120,15 @@ async function sameBytes (t, a, b) {
   const aBytes = new Uint8Array(await a.arrayBuffer())
   const bBytes = new Uint8Array(await b.arrayBuffer())
   t.true(equals(aBytes, bBytes))
+}
+
+class File extends Blob {
+  /**
+   * @param {BlobPart[]} parts
+   * @param {string} name
+   */
+  constructor (parts, name) {
+    super(parts)
+    this.name = name
+  }
 }
