@@ -36,7 +36,6 @@
   "devDependencies": {
     "@web3-storage/upload-client": "^9.0.1",
     "ava": "^5.2.0",
-    "esbuild": "^0.17.11",
     "nanoid": "^4.0.2",
     "standard": "^17.0.0",
     "testcontainers": "^9.8.0"
