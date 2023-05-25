@@ -10,6 +10,7 @@ export interface Environment {
   DYNAMO_REGION: string
   DYNAMO_TABLE: string
   S3_REGIONS: string
+  PREFER_REGION: string
 }
 
 export interface DynamoContext extends Context {
