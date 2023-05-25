@@ -174,7 +174,10 @@ export class BatchingDynamoBlockstore extends DynamoBlockstore {
   async get (cid) {
     // console.log(`get ${cid}`)
     const idxEntries = await this._idx.get(cid)
-    if (!idxEntries.length) return
+    if (!idxEntries.length) {
+      console.warn(`dynamo has not indexed: ${cid}`)
+      return
+    }
 
     this.#batcher.add(cid, idxEntries)
     const key = mhToKey(cid.multihash.bytes)
