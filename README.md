@@ -17,6 +17,8 @@ The search parameter `?origin` can optionally provide the hint of which CAR file
 https://autobahn.dag.haus/ipfs/bafybeiaaxqlnwlfeirgr5p63ftnfszmerttupnwrim52h4zv2tfpntbjdy/data.txt?origin=bagbaieralsmnkvhi3t3d7lek2ti2vhfglb4bhw7gite2qsz467zjuqvbvyva
 ```
 
+[Read MOAR](READMOAR.md)
+
 ## Getting Started
 
 The repo contains the infra deployment code and the service implementation.
