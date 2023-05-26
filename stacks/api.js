@@ -1,3 +1,7 @@
+import * as route53 from '@aws-cdk/aws-route53'
+import * as acm from '@aws-cdk/aws-certificatemanager'
+import * as cloudfront from '@aws-cdk/aws-cloudfront'
+import * as origins from '@aws-cdk/aws-cloudfront-origins'
 import { Function } from 'sst/constructs'
 import { getApiPackageJson, getGitInfo } from './config.js'
 import dotenv from 'dotenv'
@@ -7,7 +11,7 @@ dotenv.config()
 /**
  * @param {import('sst/constructs').StackContext} config
  */
-export function API ({ stack }) {
+export function API ({ stack, app }) {
   const { SENTRY_DSN, DYNAMO_REGION, DYNAMO_TABLE, S3_REGIONS } = process.env
   if (!DYNAMO_REGION || !DYNAMO_TABLE || !S3_REGIONS) {
     throw new Error('DYNAMO_REGION, DYNAMO_TABLE, S3_REGIONS required in env')
@@ -23,7 +27,7 @@ export function API ({ stack }) {
 
   // Gotta us lambda fn url + cloudfront to get the streaming behavior we want
   // see: https://aws.amazon.com/blogs/compute/introducing-aws-lambda-response-streaming/
-  const fn = new Function(stack, 'fn', {
+  const fun = new Function(stack, 'fun', {
     handler: 'packages/lambda/src/autobahn.handler',
     url: {
       cors: true,
@@ -43,9 +47,47 @@ export function API ({ stack }) {
     }
   })
 
-  fn.attachPermissions(['s3:GetObject', 'dynamodb:Query'])
+  fun.attachPermissions(['s3:GetObject', 'dynamodb:Query'])
+
+  if (!fun.url) {
+    throw new Error('Lambda Function URL is required to create cloudfront distribution')
+  }
+
+  const rootDomain = 'autobahn.dag.haus'
+  const domainName = domainForStage(stack.stage, rootDomain)
+
+  // Look up zone info. Zone must already exist. Create it in route53, and add NS records to cloudflare (as needed)
+  // @ts-expect-error sst.Stack type missing props that cdk.Stack expects
+  const hostedZone = route53.HostedZone.fromLookup(stack, 'Zone', { domainName })
+
+  // ask aws to generate a cert for domain (or fetch existing one)
+  // @ts-expect-error sst.Stack type missing props that cdk.Stack expects
+  const cert = new acm.DnsValidatedCertificate(stack, 'fun-cert', { domainName, hostedZone })
+
+  // create cloudfront dist to sit in front of lambda url
+  // @ts-expect-error sst.Stack type missing props that cdk.Stack expects
+  const dist = new cloudfront.Distribution(stack, 'fun-dist', {
+    certificate: cert,
+    domainNames: [domainName],
+    defaultBehavior: {
+      origin: new origins.HttpOrigin(fun.url)
+    }
+  })
 
   stack.addOutputs({
-    URL: fn.url
+    url: `https://${domainName}`,
+    fn: fun.url,
+    cf: dist.distributionDomainName
   })
+}
+
+/**
+ * @param {string} stage
+ * @param {string} rootDomain
+ */
+function domainForStage (stage, rootDomain) {
+  if (stage === 'prod') {
+    return rootDomain
+  }
+  return `${stage}.${rootDomain}`
 }
