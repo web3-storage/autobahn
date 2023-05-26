@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "test": "echo 'moar tests are here needed'",
     "tsc": "tsc"
   },
   "devDependencies": {

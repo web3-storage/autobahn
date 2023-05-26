@@ -7,13 +7,6 @@ import { DynamoIndex } from './block-index.js'
 import { OrderedCarBlockBatcher } from './block-batch.js'
 
 /**
- * @typedef {import('cardex/mh-index-sorted').IndexEntry} IndexEntry
- * @typedef {string} MultihashString
- * @typedef {import('dagula').Block} Block
- * @typedef {import('../bindings.js').R2Bucket} R2Bucket
- */
-
-/**
  * A blockstore that is backed by a DynamoDB index and S3 buckets.
  */
 export class DynamoBlockstore {
@@ -55,7 +48,7 @@ export class DynamoBlockstore {
 }
 
 export class BatchingDynamoBlockstore extends DynamoBlockstore {
-  /** @type {Map<string, Array<import('p-defer').DeferredPromise<Block|undefined>>>} */
+  /** @type {Map<string, Array<import('p-defer').DeferredPromise<import('dagula').Block|undefined>>>} */
   #pendingBlocks = new Map()
 
   /** @type {import('./block-batch').BlockBatcher} */
@@ -157,6 +150,8 @@ export class BatchingDynamoBlockstore extends DynamoBlockstore {
           const bytes = await bytesReader.exactly(blockHeader.blockLength)
           bytesReader.seek(blockHeader.blockLength)
           resolvePendingBlock(blockHeader.cid, bytes)
+          // remove from batcher if queued to be read
+          batcher.remove(blockHeader.cid)
         } catch {
           break
         }
