@@ -1,7 +1,7 @@
-// import * as route53 from '@aws-cdk/aws-route53'
-// import * as acm from '@aws-cdk/aws-certificatemanager'
-// import * as cloudfront from '@aws-cdk/aws-cloudfront'
-// import * as origins from '@aws-cdk/aws-cloudfront-origins'
+import * as route53 from 'aws-cdk-lib/aws-route53'
+import * as acm from 'aws-cdk-lib/aws-certificatemanager'
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront'
+import * as origins from 'aws-cdk-lib/aws-cloudfront-origins'
 import { Function } from 'sst/constructs'
 import { getApiPackageJson, getGitInfo } from './config.js'
 import dotenv from 'dotenv'
@@ -37,7 +37,6 @@ export function API ({ stack, app }) {
       NAME: pkg.name,
       REPO: pkg.homepage,
       VERSION: pkg.version,
-      BRANCH: git.branch,
       COMMIT: git.commit,
       STAGE: stack.stage,
       SENTRY_DSN: SENTRY_DSN ?? '',
@@ -49,36 +48,38 @@ export function API ({ stack, app }) {
 
   fun.attachPermissions(['s3:GetObject', 'dynamodb:Query'])
 
-  // if (!fun.url) {
-  //   throw new Error('Lambda Function URL is required to create cloudfront distribution')
-  // }
+  if (!fun.url) {
+    throw new Error('Lambda Function URL is required to create cloudfront distribution')
+  }
 
-  // const rootDomain = 'autobahn.dag.haus'
-  // const domainName = domainForStage(stack.stage, rootDomain)
+  const rootDomain = 'autobahn.dag.haus'
 
-  // // Look up zone info. Zone must already exist. Create it in route53, and add NS records to cloudflare (as needed)
-  // // @ts-expect-error sst.Stack type missing props that cdk.Stack expects
-  // const hostedZone = route53.HostedZone.fromLookup(stack, 'Zone', { domainName: rootDomain })
+  // <stage>.autobahn.dag.haus | autobahn.dag.haus
+  const domainName = domainForStage(stack.stage, rootDomain)
 
-  // // ask aws to generate a cert for domain (or fetch existing one)
-  // // @ts-expect-error sst.Stack type missing props that cdk.Stack expects
-  // const cert = new acm.DnsValidatedCertificate(stack, 'fun-cert', { domainName, hostedZone })
+  // Look up zone info. Zone must already exist. Create it in route53, and add NS records to cloudflare (as needed)
+  const hostedZone = route53.HostedZone.fromLookup(stack, 'Zone', { domainName: rootDomain })
 
-  // // create cloudfront dist to sit in front of lambda url
-  // // @ts-expect-error sst.Stack type missing props that cdk.Stack expects
-  // const dist = new cloudfront.Distribution(stack, 'fun-dist', {
-  //   certificate: cert,
-  //   domainNames: [domainName],
-  //   defaultBehavior: {
-  //     origin: new origins.HttpOrigin(fun.url)
-  //   }
-  // })
+  // ask aws to generate a cert for domain (or fetch existing one)
+  const cert = new acm.Certificate(stack, 'fun-cert', {
+    domainName,
+    validation: acm.CertificateValidation.fromDns(hostedZone)
+  })
 
-  // stack.addOutputs({
-  //   url: `https://${domainName}`,
-  //   fn: fun.url,
-  //   cf: dist.distributionDomainName
-  // })
+  // create cloudfront dist to sit in front of lambda url
+  const dist = new cloudfront.Distribution(stack, 'fun-dist', {
+    certificate: cert,
+    domainNames: [domainName],
+    defaultBehavior: {
+      origin: new origins.HttpOrigin(fun.url)
+    }
+  })
+
+  stack.addOutputs({
+    url: `https://${domainName}`,
+    fn: fun.url,
+    cf: dist.distributionDomainName
+  })
 }
 
 /**

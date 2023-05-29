@@ -13,7 +13,6 @@
     "start": "sst dev",
     "test": "npm run test --workspaces",
     "pretest": "standard && tsc",
-    "prepare": "sst build && tsc",
     "lint": "standard",
     "build": "sst build",
     "deploy": "sst deploy",
@@ -22,15 +21,10 @@
     "tsc": "tsc"
   },
   "dependencies": {
-    "@aws-cdk/aws-certificatemanager": "^1.202.0",
-    "@aws-cdk/aws-cloudfront": "^1.202.0",
-    "@aws-cdk/aws-cloudfront-origins": "^1.202.0",
-    "@aws-cdk/aws-route53-targets": "^1.202.0",
     "dotenv": "^16.0.3",
     "git-rev-sync": "^3.0.2"
   },
   "devDependencies": {
-    "@aws-cdk/cx-api": "^2.81.0",
     "@types/git-rev-sync": "^2.0.0",
     "ava": "^5.2.0",
     "aws-cdk-lib": "2.79.1",
