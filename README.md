@@ -63,7 +63,7 @@ S3_REGIONS=us-east-1,us-east-2,us-west-2
 # (optional) route53 zone name and id for custom domain.
 # Create it in route53 and point NS records for it to route53 as needed.
 HOSTED_ZONE=autobahn.dag.haus
-HOSTED_ZONE_ID=/hostedzone/Z09596441DFFYKDGRFNYN
+HOSTED_ZONE_ID=Z09596441DFFYKDGRFNYN
 ```
 
 ## Contributing
