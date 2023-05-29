@@ -12,10 +12,14 @@ dotenv.config()
  * @param {import('sst/constructs').StackContext} config
  */
 export function API ({ stack, app }) {
-  const { SENTRY_DSN, DYNAMO_REGION, DYNAMO_TABLE, S3_REGIONS } = process.env
+  const { SENTRY_DSN, DYNAMO_REGION, DYNAMO_TABLE, S3_REGIONS, HOSTED_ZONE, HOSTED_ZONE_ID } = process.env
   if (!DYNAMO_REGION || !DYNAMO_TABLE || !S3_REGIONS) {
     throw new Error('DYNAMO_REGION, DYNAMO_TABLE, S3_REGIONS required in env')
   }
+  if ((HOSTED_ZONE && !HOSTED_ZONE_ID) || (!HOSTED_ZONE && HOSTED_ZONE_ID)) {
+    throw new Error('Both HOSTED_ZONE and HOSTED_ZONE_ID must be set to enable a custom domain')
+  }
+
   const pkg = getApiPackageJson()
   const git = getGitInfo()
   stack.setDefaultFunctionProps({
@@ -52,13 +56,20 @@ export function API ({ stack, app }) {
     throw new Error('Lambda Function URL is required to create cloudfront distribution')
   }
 
-  const rootDomain = 'autobahn.dag.haus'
+  if (!HOSTED_ZONE || !HOSTED_ZONE_ID) {
+    return stack.addOutputs({
+      fn: fun.url
+    })
+  }
 
   // <stage>.autobahn.dag.haus | autobahn.dag.haus
-  const domainName = domainForStage(stack.stage, rootDomain)
+  const domainName = domainForStage(stack.stage, HOSTED_ZONE)
 
-  // Look up zone info. Zone must already exist. Create it in route53, and add NS records to cloudflare (as needed)
-  const hostedZone = route53.HostedZone.fromLookup(stack, 'Zone', { domainName: rootDomain })
+  // Import existing Zone
+  const hostedZone = route53.HostedZone.fromHostedZoneAttributes(stack, 'fun-zone', {
+    zoneName: `${HOSTED_ZONE}.`,
+    hostedZoneId: HOSTED_ZONE_ID
+  })
 
   // ask aws to generate a cert for domain (or fetch existing one)
   const cert = new acm.Certificate(stack, 'fun-cert', {
@@ -71,7 +82,7 @@ export function API ({ stack, app }) {
     certificate: cert,
     domainNames: [domainName],
     defaultBehavior: {
-      origin: new origins.HttpOrigin(fun.url)
+      origin: new origins.HttpOrigin(new URL(fun.url).origin)
     }
   })
 
