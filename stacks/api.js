@@ -86,7 +86,7 @@ export function API ({ stack, app }) {
       // url.fun is a placeholder at synth time...
       // you have to do this horror to get the hostname from the url at deploy time
       // see: https://github.com/aws/aws-cdk/blob/08ad189719f9fb3d9207f2b960ceeb7d0bd7b82b/packages/aws-cdk-lib/aws-cloudfront-origins/lib/rest-api-origin.ts#L39-L42
-      origin: new origins.HttpOrigin(cdk.Fn.select(2, cdk.Fn.split('/', fun.url))
+      origin: new origins.HttpOrigin(cdk.Fn.select(2, cdk.Fn.split('/', fun.url)))
     }
   })
 
