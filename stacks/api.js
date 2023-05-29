@@ -1,3 +1,4 @@
+import * as cdk from 'aws-cdk-lib/core'
 import * as route53 from 'aws-cdk-lib/aws-route53'
 import * as acm from 'aws-cdk-lib/aws-certificatemanager'
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront'
@@ -82,14 +83,17 @@ export function API ({ stack, app }) {
     certificate: cert,
     domainNames: [domainName],
     defaultBehavior: {
-      origin: new origins.HttpOrigin(new URL(fun.url).origin)
+      // url.fun is a placeholder at synth time...
+      // you have to do this horror to get the hostname from the url at deploy time
+      // see: https://github.com/aws/aws-cdk/blob/08ad189719f9fb3d9207f2b960ceeb7d0bd7b82b/packages/aws-cdk-lib/aws-cloudfront-origins/lib/rest-api-origin.ts#L39-L42
+      origin: new origins.HttpOrigin(cdk.Fn.select(2, cdk.Fn.split('/', fun.url))
     }
   })
 
   stack.addOutputs({
     url: `https://${domainName}`,
     fn: fun.url,
-    cf: dist.distributionDomainName
+    cf: `https://${dist.distributionDomainName}`
   })
 }
 
