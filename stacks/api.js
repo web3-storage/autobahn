@@ -97,7 +97,22 @@ export function API ({ stack, app }) {
   const dist = new cloudfront.Distribution(stack, 'fun-dist', {
     certificate: cert,
     domainNames: [domainName],
+    // cheapest. only deploy to USA, Canada, Europe, & Israel. see: https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_cloudfront.PriceClass.html
+    priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
     defaultBehavior: {
+      compress: true,
+      allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+      cachedMethods: cloudfront.CachedMethods.CACHE_GET_HEAD_OPTIONS,
+      originRequestPolicy: new cloudfront.OriginRequestPolicy(stack, 'fun-req-policy', {
+        cookieBehavior: cloudfront.OriginRequestCookieBehavior.none(),
+        headerBehavior: cloudfront.OriginRequestHeaderBehavior.all(),
+        queryStringBehavior: cloudfront.OriginRequestQueryStringBehavior.all()
+      }),
+      cachePolicy: new cloudfront.CachePolicy(stack, 'fun-cache-policy', {
+        cookieBehavior: cloudfront.CacheCookieBehavior.none(),
+        headerBehavior: cloudfront.CacheHeaderBehavior.allowList('Accept', 'Content-Type', 'If-None-Match', 'Range'),
+        queryStringBehavior: cloudfront.CacheQueryStringBehavior.all()
+      }),
       // fun.url is a placeholder at synth time...
       // you have to do this horror to get the hostname from the url at deploy time
       // see: https://github.com/aws/aws-cdk/blob/08ad189719f9fb3d9207f2b960ceeb7d0bd7b82b/packages/aws-cdk-lib/aws-cloudfront-origins/lib/rest-api-origin.ts#L39-L42
