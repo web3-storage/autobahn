@@ -104,7 +104,7 @@ export async function getHome (evt, res) {
   const { VERSION, COMMIT, STAGE, REPO } = process.env
   const env = STAGE === 'prod' ? '' : `(${STAGE})`
   const repo = `${REPO}/commit/${COMMIT}`
-  const body = `⁂ autobahn v${VERSION} ${env}\n- ${repo}`
+  const body = `⁂ autobahn v${VERSION} ${env}\n- ${repo}\n`
   res.setContentType(text)
   res.write(body)
   res.end()
