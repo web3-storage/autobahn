@@ -2,3 +2,12 @@
 before_compile:
   - n 18.16.0
   - npm ci
+
+# set --invoke-mode RESPONSE_STREAM on lambda fn
+# see: https://seed.run/docs/adding-a-build-spec#reference-cloudformation-output
+after_deploy:
+  - echo "export STACK_NAME=${SEED_STAGE_NAME}-autobahn-API" >> $BASH_ENV
+  - echo $STACK_NAME
+  - echo "export FUNCTION_NAME=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query 'Stacks[0].Outputs[?OutputKey==`functionName`].OutputValue | [0]' --output text)" >> $BASH_ENV
+  - echo $FUNCTION_NAME
+  - aws lambda update-function-url-config --function-name $FUNCTION_NAME --invoke-mode RESPONSE_STREAM
