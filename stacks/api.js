@@ -3,6 +3,7 @@ import * as route53 from 'aws-cdk-lib/aws-route53'
 import * as acm from 'aws-cdk-lib/aws-certificatemanager'
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront'
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins'
+import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets'
 import { Function } from 'sst/constructs'
 import { getApiPackageJson, getGitInfo, domainForStage } from './config.js'
 import dotenv from 'dotenv'
@@ -58,9 +59,10 @@ export function API ({ stack, app }) {
   }
 
   if (!HOSTED_ZONE || !HOSTED_ZONE_ID) {
-    return stack.addOutputs({
-      fn: fun.url
+    stack.addOutputs({
+      functionUrl: fun.url
     })
+    return
   }
 
   // <stage>.autobahn.dag.haus | autobahn.dag.haus
@@ -72,16 +74,18 @@ export function API ({ stack, app }) {
     hostedZoneId: HOSTED_ZONE_ID
   })
 
-  // WTF!? you have to make the cert in us-east-1...
-  // https://github.com/aws/aws-cdk/tree/main/packages/aws-cdk-lib/aws-cloudfront#cross-region-certificates
-  // multi-region deploys not supported in sst https://github.com/serverless-stack/sst/issues/1299
-
-  // ask aws to generate a cert for domain (or fetch existing one)
-  // const cert = new acm.Certificate(stack, 'fun-cert', {
-  //   domainName,
-  //   validation: acm.CertificateValidation.fromDns(hostedZone)
-  // })
-
+  /**
+   * We have to use the deprecated `DnsValidatedCertificate` construct here
+   * - cloudfront *requires* that certs be created in `us-east-1`
+   * - no other construct allows us to specify the region for the cert.
+   *
+   * the recommended replacement does not let us set the region for the cert:
+   *
+   *  const cert = new acm.Certificate(stack, 'fun-cert', {
+   *    domainName,
+   *    validation: acm.CertificateValidation.fromDns(hostedZone)
+   *  })
+   */
   const cert = new acm.DnsValidatedCertificate(stack, 'fun-cert', {
     region: 'us-east-1',
     hostedZone,
@@ -101,41 +105,16 @@ export function API ({ stack, app }) {
     }
   })
 
+  // eslint-disable-next-line
+  const dns = new route53.ARecord(stack, 'fun-dns', {
+    zone: hostedZone,
+    recordName: domainName,
+    target: route53.RecordTarget.fromAlias(new CloudFrontTarget(dist))
+  })
+
   stack.addOutputs({
-    url: `https://${domainName}`,
-    fn: fun.url,
-    cf: `https://${dist.distributionDomainName}`
+    url: `https://${dns.domainName}`,
+    functionUrl: fun.url,
+    cloudfrontUrl: `https://${dist.distributionDomainName}`
   })
-}
-
-/**
- * Cloudfront requires certs to be provisioned in us-east-1 to use them, so we split out cert creation to it's own stack
- * @param {import('sst/constructs').StackContext} config
- */
-export function Cert ({ stack }) {
-  const { HOSTED_ZONE, HOSTED_ZONE_ID } = process.env
-
-  if ((HOSTED_ZONE && !HOSTED_ZONE_ID) || (!HOSTED_ZONE && HOSTED_ZONE_ID)) {
-    throw new Error('Both HOSTED_ZONE and HOSTED_ZONE_ID must be set to enable a custom domain')
-  }
-  if (!HOSTED_ZONE || !HOSTED_ZONE_ID) {
-    return
-  }
-
-  // <stage>.autobahn.dag.haus | autobahn.dag.haus
-  const domainName = domainForStage(stack.stage, HOSTED_ZONE)
-
-  // Import existing Zone
-  const hostedZone = route53.HostedZone.fromHostedZoneAttributes(stack, 'fun-zone', {
-    zoneName: `${HOSTED_ZONE}.`,
-    hostedZoneId: HOSTED_ZONE_ID
-  })
-
-  // ask aws to generate a cert for domain (or fetch existing one)
-  const cert = new acm.Certificate(stack, 'fun-cert', {
-    domainName,
-    validation: acm.CertificateValidation.fromDns(hostedZone)
-  })
-
-  return { cert }
 }
