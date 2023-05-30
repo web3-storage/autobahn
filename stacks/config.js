@@ -2,21 +2,14 @@ import { createRequire } from 'module'
 import git from 'git-rev-sync'
 
 /**
- * Return the custom domain config for http api
- *
  * @param {string} stage
- * @param {string | undefined} hostedZone
- * @returns {{domainName: string, hostedZone: string} | undefined}
+ * @param {string} rootDomain
  */
-export function getCustomDomain (stage, hostedZone) {
-  // return no custom domain config if hostedZone not set
-  if (!hostedZone) {
-    return
+export function domainForStage (stage, rootDomain) {
+  if (stage === 'prod') {
+    return rootDomain
   }
-  /** @type Record<string,string> */
-  const domainMap = { prod: hostedZone }
-  const domainName = domainMap[stage] ?? `${stage}.${hostedZone}`
-  return { domainName, hostedZone }
+  return `${stage}.${rootDomain}`
 }
 
 /**
@@ -24,7 +17,7 @@ export function getCustomDomain (stage, hostedZone) {
  */
 export function getApiPackageJson () {
   const require = createRequire(import.meta.url)
-  // @ts-ignore ts dont see *.json and dont like it
+  // @ts-ignore ts don't see *.json and don't like it
   const pkg = require('./package.json')
   return pkg
 }
