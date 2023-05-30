@@ -101,10 +101,10 @@ export async function getVersion (evt, res) {
  * @param {import('lambda-stream').ResponseStream} res
  */
 export async function getHome (evt, res) {
-  const { VERSION, BRANCH, STAGE, REPO } = process.env
+  const { VERSION, COMMIT, STAGE, REPO } = process.env
   const env = STAGE === 'prod' ? '' : `(${STAGE})`
-  const repo = BRANCH === 'main' ? REPO : `${REPO}/tree/${BRANCH}`
-  const body = `⁂ autobahn v${VERSION} ${env}\n- ${repo}`
+  const repo = `${REPO}/commit/${COMMIT}`
+  const body = `⁂ autobahn v${VERSION} ${env}\n- ${repo}\n`
   res.setContentType(text)
   res.write(body)
   res.end()
