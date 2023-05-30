@@ -98,6 +98,11 @@ export function API ({ stack, app }) {
     certificate: cert,
     domainNames: [domainName],
     defaultBehavior: {
+      compress: true,
+      viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
+      allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD,
+      cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+      originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
       // fun.url is a placeholder at synth time...
       // you have to do this horror to get the hostname from the url at deploy time
       // see: https://github.com/aws/aws-cdk/blob/08ad189719f9fb3d9207f2b960ceeb7d0bd7b82b/packages/aws-cdk-lib/aws-cloudfront-origins/lib/rest-api-origin.ts#L39-L42
