@@ -4,8 +4,12 @@ before_compile:
   - npm ci
 
 # set --invoke-mode RESPONSE_STREAM on lambda fn
+# note: gotta update the aws cli first as the one with seed.run doesn't support --invoke-mode yet.
 # see: https://seed.run/docs/adding-a-build-spec#reference-cloudformation-output
 after_deploy:
+  - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  - unzip awscliv2.zip
+  - ./aws/install
   - echo "export STACK_NAME=${SEED_STAGE_NAME}-autobahn-API" >> $BASH_ENV
   - echo $STACK_NAME
   - echo "export FUNCTION_NAME=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query 'Stacks[0].Outputs[?OutputKey==`functionName`].OutputValue | [0]' --output text)" >> $BASH_ENV
