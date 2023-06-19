@@ -120,6 +120,7 @@ export function API ({ stack, app }) {
   stack.addOutputs({
     url: `https://${dns.domainName}`,
     functionUrl: fun.url,
+    functionName: fun.functionName,
     cloudfrontUrl: `https://${dist.distributionDomainName}`
   })
 }
