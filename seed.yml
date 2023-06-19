@@ -9,7 +9,7 @@ before_compile:
 after_deploy:
   - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
   - unzip awscliv2.zip
-  - ./aws/install
+  - ./aws/install --update
   - echo "export STACK_NAME=${SEED_STAGE_NAME}-autobahn-API" >> $BASH_ENV
   - echo $STACK_NAME
   - echo "export FUNCTION_NAME=$(aws cloudformation describe-stacks --stack-name $STACK_NAME --query 'Stacks[0].Outputs[?OutputKey==`functionName`].OutputValue | [0]' --output text)" >> $BASH_ENV
